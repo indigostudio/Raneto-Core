@@ -30,8 +30,8 @@ var raneto = {
 		debug: false
 	},
 
-	// Regex for page meta
-	_metaRegex: /^\/\*([\s\S]*?)\*\//i,
+	// Regex for page meta (considers Byte Order Mark in case there's one)
+	_metaRegex: /^\uFEFF?\/\*([\s\S]*?)\*\//i,
 
 	// Makes filename safe strings
 	cleanString: function(str, use_underscore) {
@@ -50,14 +50,9 @@ var raneto = {
 		return _s.titleize(_s.humanize(path.basename(slug)));
 	},
 
-	// Removes Byte Order Mark in case it exists
-	removeBom: function(markdownContent) {
-		return markdownContent.replace(/^\uFEFF/, '');
-	},
-
 	// Get meta information from Markdown content
 	processMeta: function(markdownContent) {
-		var metaArr = raneto.removeBom(markdownContent).match(raneto._metaRegex),
+		var metaArr = markdownContent.match(raneto._metaRegex),
 			meta = {};
 
 		var metaString = metaArr ? metaArr[1].trim() : '';
@@ -76,7 +71,7 @@ var raneto = {
 
 	// Strip meta from Markdown content
 	stripMeta: function(markdownContent) {
-		return raneto.removeBom(markdownContent).replace(raneto._metaRegex, '').trim();
+		return markdownContent.replace(raneto._metaRegex, '').trim();
 	},
 
 	// Replace content variables in Markdown content
