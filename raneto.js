@@ -8,6 +8,9 @@ var path = require('path'),
 	lunr = require('lunr'),
 	validator = require('validator');
 
+require('lunr-languages/tinyseg')(lunr);
+require('lunr-languages/lunr.stemmer.support')(lunr);
+
 var raneto = {
 
 	// Config array that can be overridden
@@ -29,6 +32,8 @@ var raneto = {
 		// Slugs prefixes of root content directories to support separated content directories for 
 		// multiple languages, place the language specific md files under a folder named as these roots
 		lang_paths: ['en', 'ja'], 
+		// lunr-languages ids
+		lang_path_to_lunr: {en:'', ja:'jp'}, 
 		// Default slug prefix, when there's no lang prefix this one will be used; use '' to avoid languages completely
 		default_lang_path: 'en',
 		// Toggle debug logging
@@ -105,6 +110,14 @@ var raneto = {
 		if ((root == slug) || (root == slug + '/')) return root + 'index';
 
 		return slug;
+	},
+
+	getLunrLanguageId: function(slug) {
+		var prefix = raneto.getLangPrefix(slug, true);
+		if (prefix == '') return '';
+
+		prefix = prefix.substring(0, prefix.length - 1);
+		return raneto.config.lang_path_to_lunr[prefix];
 	},
 
 	getLangPrefix: function(slug, useDefaultWhenNone) {
@@ -252,16 +265,27 @@ var raneto = {
 	},
 
 	// Index and search contents
-	doSearch: function(query) {
-		var files = glob.sync(raneto.config.content_dir +'**/*.md');
+	doSearch: function(slug, query) {
+		var targetDir = raneto.config.content_dir + raneto.getLangPrefix(slug, true);
+
+		var id = raneto.getLunrLanguageId(slug);
+		if (id != '') {
+			require('lunr-languages/lunr.' + id + '.js')(lunr)
+		}
+
+		var files = glob.sync(targetDir +'**/*.md');
 		var idx = lunr(function(){
+			if (id != '') {
+				this.use(eval('lunr.' + id));
+			}
+
 			this.field('title', { boost: 10 });
 			this.field('body');
 		});
 
 		files.forEach(function(filePath){
 			try {
-				var shortPath = filePath.replace(raneto.config.content_dir, '').trim(),
+				var shortPath = filePath.replace(targetDir, '').trim(),
 					file = fs.readFileSync(filePath);
 
 				var meta = raneto.processMeta(file.toString('utf-8'));
@@ -279,7 +303,7 @@ var raneto = {
 		var results = idx.search(query),
 			searchResults = [];
 		results.forEach(function(result){
-            var page = raneto.getPage(raneto.config.content_dir + result.ref);
+            var page = raneto.getPage(targetDir + result.ref);
             page.excerpt = page.excerpt.replace(new RegExp('('+ query +')', 'gim'), '<span class="search-query">$1</span>');
             searchResults.push(page);
         });
