@@ -26,6 +26,11 @@ var raneto = {
 		category_sort: true,
 		// Specify the path of your content folder where all your '.md' files are located
 		content_dir: './content/',
+		// Slugs prefixes of root content directories to support separated content directories for 
+		// multiple languages, place the language specific md files under a folder named as these roots
+		lang_paths: ['en', 'ja'], 
+		// Default slug prefix, when there's no lang prefix this one will be used; use '' to avoid languages completely
+		default_lang_path: 'en',
 		// Toggle debug logging
 		debug: false
 	},
@@ -81,6 +86,48 @@ var raneto = {
 		return markdownContent;
 	},
 
+	isHome: function(slug) {
+		if ((slug == '/') || (slug == '/index')) return true;
+
+		var root = '/' + raneto.getLangPrefix(slug, false);
+		if ((root == slug) || (root == slug + '/')) return true;
+
+ 		root += 'index';
+		if (root == slug) return true;
+
+		return false;
+	},
+
+	nromalizeHomeSlug: function(slug) {
+		if (slug == '/') return '/index';
+
+		var root = '/' + raneto.getLangPrefix(slug, false);
+		if ((root == slug) || (root == slug + '/')) return root + 'index';
+
+		return slug;
+	},
+
+	getLangPrefix: function(slug, useDefaultWhenNone) {
+		if (raneto.config.default_lang_path == '') return '';
+
+		for (var i=0; i < raneto.config.lang_paths.length; i++) {
+			var path = raneto.config.lang_paths[i];
+			if ((slug.toLowerCase().indexOf('/' + path + '/') == 0) || (slug.toLowerCase() == '/' + path)) {
+				return path + '/'; 
+			}
+		};
+
+		return useDefaultWhenNone ? raneto.config.default_lang_path + '/' : '';
+	},
+
+	mapPath: function(slug) {
+		var prefix = raneto.getLangPrefix(slug, false) == '' ? 
+			raneto.config.default_lang_path + '/' :
+			'';
+
+		return path.normalize(raneto.config.content_dir + prefix + slug);
+	},
+
 	// Get a page
 	getPage: function(filePath) {
 		try {
@@ -113,9 +160,12 @@ var raneto = {
 	// Get a structured array of the contents of contentDir
 	getPages: function(activePageSlug) {
 		activePageSlug = activePageSlug || '';
+
+		var targetDir = raneto.config.content_dir + raneto.getLangPrefix(activePageSlug, true);
+
 		var page_sort_meta = raneto.config.page_sort_meta || '',
 			category_sort = raneto.config.category_sort || false,
-			files = glob.sync(raneto.config.content_dir +'**/*'),
+			files = glob.sync(targetDir +'**/*'),
 			filesProcessed = [];
 
 		filesProcessed.push({
@@ -128,7 +178,7 @@ var raneto = {
 		});
 
 		files.forEach(function(filePath){
-            var shortPath = filePath.replace(raneto.config.content_dir, '').trim(),
+            var shortPath = filePath.replace(targetDir, '').trim(),
 				stat = fs.lstatSync(filePath);
 
 			if(stat.isSymbolicLink()) {
@@ -139,14 +189,14 @@ var raneto = {
 				var sort = 0;
 
 				//ignore directories that has an ignore file under it
-				var ignoreFile = raneto.config.content_dir + shortPath +'/ignore';
+				var ignoreFile = targetDir + shortPath +'/ignore';
 				if (fs.existsSync(ignoreFile) && fs.lstatSync(ignoreFile).isFile()) {
 					return true;
 				}
 
 				if(category_sort){
 					try {
-						var sortFile = fs.readFileSync(raneto.config.content_dir + shortPath +'/sort');
+						var sortFile = fs.readFileSync(targetDir + shortPath +'/sort');
 						sort = parseInt(sortFile.toString('utf-8'), 10);
 					}
 					catch(e){
@@ -181,9 +231,9 @@ var raneto = {
 
 					var val = _.find(filesProcessed, function(item){ return item.slug == dir; });
 					val.files.push({
-						slug: slug,
+						slug: raneto.getLangPrefix(activePageSlug, false) + slug,
 						title: meta.title ? meta.title : raneto.slugToTitle(slug),
-						active: (activePageSlug.trim() == '/'+ slug),
+						active: (activePageSlug.trim() == '/' + raneto.getLangPrefix(activePageSlug, false) + slug),
 						sort: pageSort
 					});
 				}
