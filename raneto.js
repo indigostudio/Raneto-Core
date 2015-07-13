@@ -217,9 +217,20 @@ var raneto = {
 					}
 				}
 
+				var title = null;
+				try {
+					if (fs.existsSync(targetDir + shortPath +'/title')) {
+						var titleFile = fs.readFileSync(targetDir + shortPath +'/title');
+						title = titleFile.toString('utf-8');
+					}
+				}
+				catch(e){
+					if(raneto.config.debug) console.log(e);
+				}
+
 				filesProcessed.push({
 					slug: shortPath,
-					title: _s.titleize(_s.humanize(path.basename(shortPath))),
+					title: title ? title : _s.titleize(_s.humanize(path.basename(shortPath))),
 					is_index: false,
 					class: 'category-'+ raneto.cleanString(shortPath),
 					sort: sort,
