@@ -11,6 +11,45 @@ var path = require('path'),
 require('lunr-languages/tinyseg')(lunr);
 require('lunr-languages/lunr.stemmer.support')(lunr);
 
+var parse = marked.Parser.parse;
+marked.Parser.parse = function(src, options, renderer) {
+    options.renderer.links = src.links;
+    return parse(src, options, renderer);
+};
+
+function buildMarkedReader() {
+    // Allows the definition of explicit anchors by defining headings like this:
+    //   ## (anchor_id) This is a header
+    // This enables using same anchors on any language
+    var customRenderer = new marked.Renderer();
+    customRenderer.heading = function (text, level, raw) {
+        var escapedText;
+        var regex = /^\(([^)]+)\)/;
+        var matches = text.match(regex);
+
+        if (matches !== null && matches.length > 1) {
+            escapedText = matches[1];
+            text = text.replace(regex, '').trim();
+            var link = this.links[escapedText]; 
+            if (link != null && link.href != null) {
+                escapedText = link.href.substring(1);
+            }
+        }
+        else {
+            escapedText = raw.toLowerCase().replace(/[^\w]+/g, '-');
+        }
+
+        return '<h' + level + '><a name="' +
+                    escapedText +
+                     '" class="anchor" href="#' +
+                     escapedText +
+                     '"><span class="header-link"></span></a>' +
+                      text + '</h' + level + '>';
+    };
+
+    return customRenderer;
+}
+
 var raneto = {
 
 	// Config array that can be overridden
@@ -155,12 +194,14 @@ var raneto = {
 			var meta = raneto.processMeta(file.toString('utf-8')),
 				content = raneto.stripMeta(file.toString('utf-8'));
 			content = raneto.processVars(content);
-			var html = marked(content);
+
+			var html = marked(content, { renderer: buildMarkedReader() });
 
 			return {
 				'slug': slug,
 				'title': meta.title ? meta.title : raneto.slugToTitle(slug),
 				'body': html,
+				'meta': meta,
 				'excerpt': _s.prune(_s.stripTags(_s.unescapeHTML(html)), (raneto.config.excerpt_length || 400))
 			};
 		}
