@@ -36,7 +36,7 @@
     "glob": "^4.0.0",
     "lunr": "^0.5.3",
     "lunr-languages": "git://github.com/indigostudio/lunr-languages.git#indigodesigned",
-    "marked": "^0.3.2",
+    "marked": "^0.3.5",
     "moment": "^2.6.0",
     "underscore": "^1.6.0",
     "underscore.string": "^2.3.3",

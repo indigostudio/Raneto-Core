@@ -195,7 +195,7 @@ var raneto = {
 				content = raneto.stripMeta(file.toString('utf-8'));
 			content = raneto.processVars(content);
 
-			var html = marked(content, { renderer: buildMarkedReader() });
+			var html = raneto.renderPage(content);
 
 			return {
 				'slug': slug,
@@ -209,6 +209,10 @@ var raneto = {
 			if(raneto.config.debug) console.log(e);
 			return null;
 		}
+	},
+
+	renderPage: function(content) {
+		return marked(content, { renderer: buildMarkedReader() });
 	},
 
 	// Get a structured array of the contents of contentDir
