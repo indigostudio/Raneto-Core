@@ -113,8 +113,8 @@ describe('#processVars()', function () {
 
   it('replaces config vars in Markdown content', function () {
     raneto.config.base_url = '/base/url';
-    raneto.processVars('This is some Markdown with a %base_url%.')
-          .should.equal('This is some Markdown with a /base/url.');
+    raneto.processVars('This is some Markdown with a %base_url%.', raneto.config.base_url + "/one")
+          .should.equal('This is some Markdown with a /base/url.', raneto.config.base_url + "/two");
   });
 
 });
