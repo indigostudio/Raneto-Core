@@ -170,14 +170,14 @@ describe('#doSearch()', function () {
 
   it('finds case insensitive', function () {
     raneto.config.content_dir = path.join(__dirname, 'content') + '/';
-    return raneto.doSearch('/en/', 'exaMple').then(result => {
+    return raneto.doSearch('/en/', 'exaMple').then(function(result) {
       expect(result).to.have.length(3);
     });
   });
 
   it('returns an empty array if nothing found', function () {
     raneto.config.content_dir = path.join(__dirname, 'content') + '/';
-    return raneto.doSearch('/en/', 'asdasdasd').then(result => {
+    return raneto.doSearch('/en/', 'asdasdasd').then(function(result) {
       expect(result).to.be.empty;
     });
   });
