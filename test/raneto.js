@@ -162,15 +162,23 @@ describe('#doSearch()', function () {
 
   it('returns an array of search results', function () {
     raneto.config.content_dir = path.join(__dirname, 'content') + "/";
-    var result = raneto.doSearch('/en/', 'example');
-    expect(result).to.have.length(3);
-    expect(result[0]).to.have.property('slug');
+    return raneto.doSearch('/en/', 'example').then(result => {
+      expect(result).to.have.length(3);
+      expect(result[0]).to.have.property('slug');
+    });
+  });
+
+  it('finds case insensitive', function () {
+    raneto.config.content_dir = path.join(__dirname, 'content') + "/";
+    return raneto.doSearch('/en/', 'exaMple').then(result => {
+      expect(result).to.have.length(3);
+    });
   });
 
   it('returns an empty array if nothing found', function () {
     raneto.config.content_dir = path.join(__dirname, 'content') + "/";
-    var result = raneto.doSearch('/en/', 'asdasdasd');
-    expect(result).to.be.empty;
+    return raneto.doSearch('/en/', 'asdasdasd').then(result => {
+      expect(result).to.be.empty;
+    });
   });
-
 });
