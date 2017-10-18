@@ -13,7 +13,8 @@
   ],
   "main": "lib/raneto.js",
   "scripts": {
-    "test": "mocha --reporter spec"
+    "lint": "jshint lib/ test/",
+    "test": "npm run lint && mocha --reporter spec"
   },
   "repository": {
     "type": "git",

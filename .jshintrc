@@ -19,5 +19,6 @@
   "undef"    : true,
   "unused"   : "vars",
   "strict"   : true,
-  "node"     : true
+  "node"     : true,
+  "esversion": 6
 }
